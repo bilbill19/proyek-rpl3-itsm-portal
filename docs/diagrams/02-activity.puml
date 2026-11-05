@@ -1,0 +1,25 @@
+@startuml
+start
+:Browser mengirim pesan;
+:Validasi sesi, owner, input, pembatas;
+if (valid?) then (ya)
+ :Simpan pesan USER;
+ :Scope gate, routing peran, konteks DB terfilter;
+ if (perlu inferensi AI?) then (ya)
+  :Sanitasi outbound;
+  :Panggil NVIDIA dengan timeout;
+  if (provider berhasil?) then (ya)
+   :Gunakan balasan provider;
+  else (tidak)
+   :ExpertEngine fallback + label jujur;
+  endif
+ else (tidak)
+  :Jawaban deterministik atau penolakan scope;
+ endif
+ :Simpan ASSISTANT;
+ :Browser menampilkan jawaban;
+else (tidak)
+ :401/403/400/429;
+endif
+stop
+@enduml

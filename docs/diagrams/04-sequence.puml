@@ -1,0 +1,31 @@
+@startuml
+actor Customer
+participant Frontend
+participant Backend
+database PostgreSQL
+participant "NVIDIA API" as NVIDIA
+Customer -> Frontend: Kirim pesan pertama
+Frontend -> Backend: POST /api/ai/conversations
+Backend -> PostgreSQL: getSession / akun aktif
+PostgreSQL --> Backend: user + role
+alt sesi/input/pembatas tidak valid
+ Backend --> Frontend: 401 / 400 / 429
+else valid
+ Backend -> PostgreSQL: create conversation + USER
+ Backend -> PostgreSQL: konteks terfilter dan katalog
+ PostgreSQL --> Backend: data yang diizinkan
+ alt scope/deterministik
+  Backend -> Backend: penolakan atau tool lokal
+ else inferensi AI
+  Backend -> NVIDIA: sanitized messages, timeout 25s
+  alt provider sukses
+   NVIDIA --> Backend: reply
+  else error/timeout
+   Backend -> Backend: ExpertEngine fallback
+  end
+ end
+ Backend -> PostgreSQL: simpan ASSISTANT
+ Backend --> Frontend: 201 conversation + provider aktual
+ Frontend --> Customer: Tampilkan jawaban
+end
+@enduml

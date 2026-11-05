@@ -1,0 +1,26 @@
+@startuml
+left to right direction
+actor Tamu
+actor Customer
+actor Admin
+actor "NVIDIA API" as NVIDIA
+rectangle "ITSM Portal" {
+ usecase "UC01 Registrasi / Login" as login
+ usecase "Katalog dan Mimo publik" as public
+ usecase "UC05 Tracking ringkas" as track
+ usecase "UC02 Buat / lihat pesanan" as order
+ usecase "UC04 Konsultasi Miko" as miko
+ usecase "Notifikasi / preferensi" as notif
+ usecase "UC03 Kelola operasional" as manage
+}
+Tamu -- login
+Tamu -- public
+Tamu -- track
+Customer -- order
+Customer -- miko
+Customer -- notif
+Admin -- miko
+Admin -- manage
+NVIDIA -- public
+NVIDIA -- miko
+@enduml

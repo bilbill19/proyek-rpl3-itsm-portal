@@ -1,0 +1,3 @@
+Prisma schema loaded from prisma\schema.prisma
+The schema at prisma\schema.prisma is valid 🚀
+Exit code: 0

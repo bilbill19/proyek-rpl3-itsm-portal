@@ -1,0 +1,12 @@
+Production build attempted with dummy audit env (no user secrets):
+Next.js 14.2.35 - Creating an optimized production build ...
+Failed to compile: EPERM: operation not permitted, mkdir .next/server/app/api/admin
+Exit code 1. Full production build not verified.
+
+Isolated PostgreSQL 18 initialization succeeded. Local connection attempt:
+createdb: connection to 127.0.0.1 port 55438 failed: Permission denied (10013)
+Prisma migrate deploy: Schema engine error. No successful migration claimed.
+
+Registry metadata fetch: fetch failed. Dependency upgrade not applied.
+No live GitHub, Figma, NVIDIA, WhatsApp or deployment executed.
+These excerpts summarize observed tool output, not an independent replay log.

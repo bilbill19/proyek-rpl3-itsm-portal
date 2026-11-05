@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+backups
+.demo-backup
+*.dump
+*.log
+docs
+audit_miko_customer
+bukti_polish_ui

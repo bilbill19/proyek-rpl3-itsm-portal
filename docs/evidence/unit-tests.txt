@@ -1,0 +1,33 @@
+✔ order accepts onsite only when a full address exists (10.2871ms)
+✔ prices accept zero and numeric UI strings (2.9486ms)
+✔ reject invalid price -1 (1.2279ms)
+✔ reject invalid price Infinity (0.8452ms)
+✔ reject invalid price NaN (1.8201ms)
+✔ reject invalid price abc (0.819ms)
+✔ reject invalid price    (0.956ms)
+✔ reject invalid price 1.001 (0.5368ms)
+✔ reject invalid price 10000000000 (0.8995ms)
+✔ reject invalid price [object Object] (1.0081ms)
+✔ reject invalid price true (1.0478ms)
+✔ reject arbitrary status, non-string note, empty and unexpected updates (6.88ms)
+✔ valid status accepted (0.7574ms)
+✔ outbound sanitizer removes supported secrets and PII (1.4911ms)
+✔ rate limit isolates users and resets at expiration (0.9543ms)
+✔ phone handles local, international and invalid forms (0.8342ms)
+✔ ticket collision retries unique index and returns next number (1.0904ms)
+✔ ticket does not retry unrelated failures and is bounded (1.769ms)
+✔ unauthenticated and cross-customer detail access denied (23.4403ms)
+✔ customer cannot update status (2.5847ms)
+✔ invalid admin update returns 400 without write (6.8787ms)
+✔ price-only update creates no false history and returns no password (26.6086ms)
+✔ public tracking suppresses private notes (2.9286ms)
+✔ email recovery returns 503 without a token or false delivery claim (40.2613ms)
+✔ NVIDIA adapter sends sanitized content and handles provider errors (62.1133ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1778.9223

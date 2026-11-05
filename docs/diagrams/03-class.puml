@@ -1,0 +1,39 @@
+@startuml
+interface AIProviderInterface {
+ name: string
+ generateResponse(messages, query): AIResponseResult
+}
+class NvidiaNimProvider {
+ systemPrompt: string
+ generateResponse()
+}
+class ExpertEngineProvider {
+ generateResponse()
+}
+class GeminiProvider
+class OpenAIProvider
+class AnthropicProvider
+class OllamaProvider
+AIProviderInterface <|.. NvidiaNimProvider
+AIProviderInterface <|.. ExpertEngineProvider
+AIProviderInterface <|.. GeminiProvider
+AIProviderInterface <|.. OpenAIProvider
+AIProviderInterface <|.. AnthropicProvider
+AIProviderInterface <|.. OllamaProvider
+class "AI pipeline" as Pipeline <<module>> {
+ generateRoleReply(session, text, history)
+}
+class "auth/rbac" as Auth <<module>> {
+ getSession()
+ requireAdmin()
+}
+class "customer-context" as Context <<module>> {
+ getOrderContextBlock(customerId)
+}
+class "Prisma Client" as Prisma <<module>>
+Pipeline ..> AIProviderInterface : uses
+Pipeline ..> Auth
+Pipeline ..> Context
+Pipeline ..> Prisma : read only tools
+Context ..> Prisma
+@enduml

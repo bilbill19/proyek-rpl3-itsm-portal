@@ -1,0 +1,71 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Next.js build output
+/.next/
+/out/
+
+# Production
+/build
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Env / secrets — JANGAN PERNAH commit API key atau kredensial
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+.env.*
+!.env.example
+backups/
+.demo-backup/
+*.dump
+audit_miko_customer/
+bukti_polish_ui/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Prisma
+prisma/*.db
+
+# Private keys, credentials, and local service configuration
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa*
+id_ed25519*
+.npmrc
+.netrc
+.git-credentials
+credentials.json
+service-account*.json
+service_account*.json
+.aws/
+.ssh/
+.vercel/
+
+# Local databases and database backups (keep Prisma SQL migrations)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.sqlite3-journal
+*.backup

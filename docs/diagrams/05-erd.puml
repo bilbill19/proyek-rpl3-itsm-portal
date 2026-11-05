@@ -1,0 +1,63 @@
+@startuml
+entity User {
+ * id : UUID PK
+ email : UNIQUE
+ role
+ isActive
+}
+entity Service {
+ * id : UUID PK
+ price : Decimal(12,2)
+}
+entity ServiceOrder {
+ * id : UUID PK
+ ticketNumber : UNIQUE
+ customerId : FK
+ serviceId : FK nullable
+}
+entity ServiceOrderStatusHistory {
+ * id : UUID PK
+ orderId : FK
+}
+entity AIConversation {
+ * id : UUID PK
+ customerId : FK
+}
+entity AIMessage {
+ * id : UUID PK
+ conversationId : FK
+}
+entity InventoryItem {
+ * id : UUID PK
+ sku : UNIQUE
+}
+entity Notification {
+ * id : UUID PK
+ userId : FK
+ orderId : FK nullable
+}
+entity NotificationPreference {
+ * id : UUID PK
+ userId : FK
+ userId_channel : UNIQUE
+}
+entity WhatsAppDelivery {
+ * id : UUID PK
+ userId : FK
+ orderId : FK nullable
+}
+entity NotificationOutbox {
+ * id : UUID PK
+ payload : Text JSON, no FK
+}
+User ||--o{ ServiceOrder
+Service |o--o{ ServiceOrder
+ServiceOrder ||--o{ ServiceOrderStatusHistory
+User ||--o{ AIConversation
+AIConversation ||--o{ AIMessage
+User ||--o{ Notification
+ServiceOrder |o--o{ Notification
+User ||--o{ NotificationPreference
+User ||--o{ WhatsAppDelivery
+ServiceOrder |o--o{ WhatsAppDelivery
+@enduml

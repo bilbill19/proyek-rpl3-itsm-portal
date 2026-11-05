@@ -1,0 +1,17 @@
+﻿requirement,name,acceptance,implementation,verification
+FR01,Registrasi pelanggan,"Nama, email dan konfirmasi sandi valid menghasilkan akun CUSTOMER; email sama ditolak; role dari input tidak digunakan.",auth/register; validations/auth,TC autentikasi live belum dijalankan
+FR02,Login dan sesi,Sandi salah ditolak; akun nonaktif ditolak; cookie HttpOnly dan SameSite Lax; produksi Secure; percobaan berlebih 429.,auth/login; lib/auth; middleware,Audit statis; uji HTTP perlu DB
+FR03,Katalog layanan,Layanan nonaktif tidak tampil bagi publik; admin dapat melihat semua; harga bersumber database.,api/services; ServicesSection,Audit statis
+FR04,Pemesanan servis,ONSITE tanpa alamat ditolak; deskripsi minimal 10 karakter; layanan nonaktif ditolak; tiket dan history CREATED dibuat bersama nested write.,api/orders; validations/order,"Unit ONSITE, retry tiket; E2E belum"
+FR05,Detail pesanan privat,Tanpa sesi 401; pelanggan lain 403; admin dapat membaca; objek respons tidak mengandung password.,api/orders/[id],Handler akses negatif dan respons aman lulus
+FR06,Tracking publik,"Nomor wajib diisi; tiket tidak ada 404; pembatas 20/menit; catatan bebas, alamat, foto, telepon dan problemDescription tidak dikembalikan.",api/track; TrackingClient,Handler catatan privat lulus; UI live belum
+FR07,Update pesanan admin,Pelanggan ditolak; enum status valid; harga finite nonnegatif dengan maksimal 2 desimal; harga saja tidak menambah history status.,api/orders/[id]; updateServiceOrderSchema,Unit dan handler lulus
+FR08,Manajemen layanan,Buat/edit/hapus menolak pelanggan; perubahan divalidasi; penonaktifan membatasi katalog publik.,api/services; ServiceForm,Audit statis; DB belum
+FR09,Pelanggan dan pengguna,Profil valid wajib; password dihash; respons profil tanpa hash; akun sendiri/admin aktif terakhir memiliki guard pada endpoint admin/users.,api/customers; api/admin/users,Audit statis; konflik admin paralel belum diuji
+FR10,Inventaris,SKU unik; stok/minimum serta harga divalidasi; hanya admin mengakses; item rendah stok dapat diidentifikasi.,api/inventory; validations/inventory,Audit statis
+FR11,Mimo publik,Input maksimal 2000 karakter; maksimal 10 riwayat; konteks tanpa profil pribadi; provider aktual dikembalikan; gagal NVIDIA memakai fallback dengan label jujur.,api/ai/chat; lib/ai/index; nvidia,Adapter mock lulus; AI live belum
+FR12,Miko privat,Percakapan diikat customerId sesi; user lain ditolak; pesan maksimal 2000; konteks pesanan difilter pemilik; outbound didesensitisasi.,api/ai/conversations; pipeline; customer-context,Audit statis; uji konteks dengan DB perlu dilakukan
+FR13,Miko operasional,Endpoint admin menolak customer; intent statistik memakai tool read-only; hasil katalog dan jumlah bersumber DB; tidak mengizinkan AI menulis data.,api/ai/admin; knowledge/router; tools,Audit statis
+FR14,Notifikasi,Notifikasi/outbox dibuat dalam transaksi perubahan status; read-all hanya milik sesi; WhatsApp membutuhkan enable/live/config/opt-in.,notifications/service; whatsapp/dispatcher,Audit statis; WhatsApp simulation/live belum dijalankan
+FR15,Pelaporan dan DevOps,npm test dan typecheck tersedia; workflow memakai Postgres bersih; migrasi/build/audit menjadi gate; image hanya dipublikasikan manual setelah check.,tests; .github/workflows/ci.yml; Dockerfile,25 tes lokal; Actions/container belum dieksekusi
+FR16,Pemulihan akun,"Tanpa sender, endpoint memberi 503 umum tanpa bocorkan token/keberadaan email; admin membantu sesuai proses verifikasi identitas.",auth/forgot-password,Handler 503 lulus; email otomatis belum tersedia
