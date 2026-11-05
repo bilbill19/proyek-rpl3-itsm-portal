@@ -1,0 +1,271 @@
+// Prisma Schema for IT Service Management
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --------------------------------------------------------
+// ENUMS
+// --------------------------------------------------------
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum OrderStatus {
+  CREATED
+  WAITING_CONFIRMATION
+  DEVICE_RECEIVED
+  CHECKING
+  IN_PROGRESS
+  WAITING_APPROVAL
+  COMPLETED
+  DELIVERED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+// --------------------------------------------------------
+// MODELS
+// --------------------------------------------------------
+
+model User {
+  id            String           @id @default(uuid())
+  name          String
+  email         String           @unique
+  password      String
+  phone         String?
+  role          Role             @default(CUSTOMER)
+  // Status akun: false = login DITOLAK & sesi yang ada tidak berlaku lagi
+  // (diperiksa di login route + getSession). Default true → semua akun lama
+  // tetap aktif (migrasi non-destruktif, disetujui pemilik proyek).
+  isActive      Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  // Relations
+  orders        ServiceOrder[]
+  conversations AIConversation[]
+  notifications Notification[]
+  notificationPrefs  NotificationPreference[]
+  whatsappDeliveries WhatsAppDelivery[]
+
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Service {
+  id                String         @id @default(uuid())
+  name              String
+  description       String         @db.Text
+  price             Decimal        @db.Decimal(12, 2)
+  estimatedDuration String         // e.g. "1-2 Hari", "2-3 Jam"
+  image             String?
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  // Relations
+  orders            ServiceOrder[]
+
+  @@index([isActive])
+  @@index([name])
+  @@map("services")
+}
+
+model ServiceOrder {
+  id                 String                      @id @default(uuid())
+  ticketNumber       String                      @unique // e.g. "SRV-2026-0001"
+  customerId         String
+  serviceId          String?
+  deviceType         String                      // e.g. "Laptop", "PC Desktop", "Printer", "MacBook", "Server"
+  deviceBrand        String                      // e.g. "Asus ROG", "Lenovo ThinkPad", "Dell XPS", "MacBook Pro"
+  problemDescription String                      @db.Text
+  damageImage        String?                     @db.Text // Upload foto kerusakan (opsional)
+  serviceMethod      String                      @default("DROP_OFF") // "DROP_OFF" (Antar Perangkat) atau "ONSITE" (Teknisi ke Lokasi)
+  address            String?                     @db.Text
+  estimatedPrice     Decimal?                    @db.Decimal(12, 2)
+  finalPrice         Decimal?                    @db.Decimal(12, 2)
+  status             OrderStatus                 @default(CREATED)
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+
+  // Relations
+  customer           User                        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  service            Service?                    @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  statusHistory      ServiceOrderStatusHistory[]
+  notifications      Notification[]
+  whatsappDeliveries WhatsAppDelivery[]
+
+  @@index([ticketNumber])
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("service_orders")
+}
+
+model ServiceOrderStatusHistory {
+  id        String       @id @default(uuid())
+  orderId   String
+  status    OrderStatus
+  note      String?      @db.Text
+  createdAt DateTime     @default(now())
+
+  // Relations
+  order     ServiceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("service_order_status_history")
+}
+
+model AIConversation {
+  id         String       @id @default(uuid())
+  customerId String
+  title      String       @default("Konsultasi Perbaikan IT")
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  // Relations
+  customer   User         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  messages   AIMessage[]
+
+  @@index([customerId])
+  @@index([createdAt])
+  @@map("ai_conversations")
+}
+
+model AIMessage {
+  id             String         @id @default(uuid())
+  conversationId String
+  role           MessageRole    @default(USER)
+  content        String         @db.Text
+  createdAt      DateTime       @default(now())
+
+  // Relations
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
+  @@map("ai_messages")
+}
+
+model InventoryItem {
+  id            String    @id @default(uuid())
+  sku           String    @unique
+  name          String
+  category      String
+  brand         String?
+  compatibility String?
+  stock         Int       @default(0)
+  minStock      Int       @default(5)
+  unit          String    @default("Unit")
+  purchasePrice Decimal   @db.Decimal(12, 2)
+  sellingPrice  Decimal   @db.Decimal(12, 2)
+  location      String?
+  condition     String    @default("NEW")
+  notes         String?   @db.Text
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([sku])
+  @@index([category])
+  @@index([stock])
+  @@index([isActive])
+  @@map("inventory_items")
+}
+
+// ============================================================================
+// P4/P7/P8 — NOTIFICATION CENTER & WHATSAPP (migrasi ADDITIVE, non-destruktif)
+// Tidak ada tabel/kolom existing yang dihapus atau diubah.
+// ============================================================================
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  orderId   String?
+  type      String    @default("order_status") // order_status | system
+  title     String
+  body      String    @db.Text
+  // Kunci idempotensi: "status:IN_PROGRESS" — satu perubahan status pada satu
+  // pesanan hanya menghasilkan SATU notifikasi (upsert bila sudah ada).
+  dedupKey  String?
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order ServiceOrder? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@unique([orderId, dedupKey])
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id        String   @id @default(uuid())
+  userId    String
+  channel   String   // "in_app" | "whatsapp"
+  // Default FALSE = OPT-IN WhatsApp (LIVE tidak pernah menyala tanpa izin).
+  // Notifikasi in-app TETAP tampil walau whatsapp nonaktif (by design).
+  enabled   Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, channel])
+  @@map("notification_preferences")
+}
+
+model WhatsAppDelivery {
+  id                String    @id @default(uuid())
+  orderId           String?
+  userId            String
+  toPhone           String
+  templateName      String    @default("itsm_order_status_update")
+  mode              String    // "simulation" | "live"
+  status            String    // "simulated" | "sent" | "failed"
+  providerMessageId String?   // id-balasan Meta (hanya mode LIVE yang sukses)
+  error             String?   @db.Text // pesan sanitized — TANPA token/kredensial
+  attempts          Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  order ServiceOrder? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([orderId])
+  @@map("whatsapp_deliveries")
+}
+
+model NotificationOutbox {
+  id            String    @id @default(uuid())
+  eventType     String    // "order_status_whatsapp"
+  payload       String    @db.Text // JSON — TANPA secret/token
+  status        String    @default("pending") // pending | processing | done | failed
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  lastError     String?   @db.Text // sanitized
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@map("notification_outbox")
+}
+
