@@ -8,7 +8,7 @@
 - NIM: 41257095
 - Kelas: TI-KIP-1A-2025
 - Kelompok dan Tema Topik Kelompok: RPL 3 & Bisnis
-- Target repo: `bilbill19/proyek-rpl-itsm-portal` (repo publik belum dibuat)
+- Target repo: `bilbill19/proyek-rpl-itsm-portal` 
 
 ## Aplikasi dan AI
 
