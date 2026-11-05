@@ -18,24 +18,25 @@ const PAGE_SIZE = 8;
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: { q?: string; role?: string; status?: string; page?: string };
+  searchParams: Promise<{ q?: string; role?: string; status?: string; page?: string }>;
 }) {
   const session = await requireAdmin();
+  const resolvedSearchParams = await searchParams;
 
-  const q = (searchParams.q || '').trim().slice(0, 120);
+  const q = (resolvedSearchParams.q || '').trim().slice(0, 120);
   const roleFilter =
-    searchParams.role === 'ADMIN'
+    resolvedSearchParams.role === 'ADMIN'
       ? ('ADMIN' as const)
-      : searchParams.role === 'CUSTOMER'
+      : resolvedSearchParams.role === 'CUSTOMER'
         ? ('CUSTOMER' as const)
         : ('ALL' as const);
   const statusFilter =
-    searchParams.status === 'ACTIVE'
+    resolvedSearchParams.status === 'ACTIVE'
       ? ('ACTIVE' as const)
-      : searchParams.status === 'INACTIVE'
+      : resolvedSearchParams.status === 'INACTIVE'
         ? ('INACTIVE' as const)
         : ('ALL' as const);
-  const page = Math.max(1, parseInt(searchParams.page || '1', 10) || 1);
+  const page = Math.max(1, parseInt(resolvedSearchParams.page || '1', 10) || 1);
 
   let users: UserRow[] = [];
   let total = 0;

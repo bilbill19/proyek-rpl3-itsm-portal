@@ -5,19 +5,24 @@ import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
 
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
 // GET: Detail lengkap pelanggan beserta seluruh riwayat pesanan servis
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: RouteParams
 ) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Akses ditolak.' }, { status: 403 });
     }
 
     const customer = await prisma.user.findUnique({
-      where: { id: params.id, role: 'CUSTOMER' },
+      where: { id, role: 'CUSTOMER' },
       include: {
         orders: {
           orderBy: { createdAt: 'desc' },
@@ -101,9 +106,10 @@ export async function GET(
 // PATCH: Perbarui data profil pelanggan atau reset kata sandi
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: RouteParams
 ) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Akses ditolak.' }, { status: 403 });
@@ -113,7 +119,7 @@ export async function PATCH(
     const { name, email, phone, password } = body;
 
     const currentCustomer = await prisma.user.findUnique({
-      where: { id: params.id, role: 'CUSTOMER' },
+      where: { id, role: 'CUSTOMER' },
     });
 
     if (!currentCustomer) {
@@ -125,7 +131,7 @@ export async function PATCH(
       const existingEmail = await prisma.user.findUnique({
         where: { email: email.toLowerCase() },
       });
-      if (existingEmail && existingEmail.id !== params.id) {
+      if (existingEmail && existingEmail.id !== id) {
         return NextResponse.json({ error: 'Alamat email telah terdaftar oleh pengguna lain.' }, { status: 400 });
       }
     }
@@ -139,7 +145,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.user.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
     });
 
@@ -162,16 +168,17 @@ export async function PATCH(
 // DELETE: Hapus akun pelanggan
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: RouteParams
 ) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Akses ditolak.' }, { status: 403 });
     }
 
     const customer = await prisma.user.findUnique({
-      where: { id: params.id, role: 'CUSTOMER' },
+      where: { id, role: 'CUSTOMER' },
     });
 
     if (!customer) {
@@ -179,7 +186,7 @@ export async function DELETE(
     }
 
     await prisma.user.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({

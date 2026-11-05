@@ -9,21 +9,22 @@ import { getWhatsappConfig } from '@/lib/whatsapp/env';
 export const dynamic = 'force-dynamic';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET: Ambil detail order
 export async function GET(request: Request, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: 'Harap login terlebih dahulu.' }, { status: 401 });
     }
 
     const order = await prisma.serviceOrder.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         customer: {
           select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
@@ -54,6 +55,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 // PATCH: Update status, catatan, estimasi harga, dan harga final (Khusus ADMIN)
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json(
@@ -67,7 +69,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     // Ambil data order lama
     const existingOrder = await prisma.serviceOrder.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingOrder) {
@@ -92,7 +94,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const updatedOrder = await prisma.$transaction(async (tx) => {
       // 1. Update data ServiceOrder
       const ord = await tx.serviceOrder.update({
-        where: { id: params.id },
+        where: { id },
         data: updateData,
         include: {
           customer: true,
@@ -105,7 +107,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       if (status !== existingOrder.status || (note && note.trim().length > 0)) {
         await tx.serviceOrderStatusHistory.create({
           data: {
-            orderId: params.id,
+            orderId: id,
             status: targetStatus,
             note: note && note.trim().length > 0 ? note.trim() : `Status diperbarui menjadi ${targetStatus} oleh Administrator (${session.name}).`,
           },
@@ -155,7 +157,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     // Ambil data terbaru dengan statusHistory terupdate
     const freshOrder = await prisma.serviceOrder.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         customer: true,
         service: true,

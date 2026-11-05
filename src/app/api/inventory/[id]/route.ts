@@ -5,19 +5,24 @@ import { inventoryItemSchema, stockAdjustmentSchema } from '@/lib/validations/in
 
 export const dynamic = 'force-dynamic';
 
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
 // GET: Ambil detail suku cadang berdasarkan ID
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: RouteParams
 ) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Akses ditolak.' }, { status: 403 });
     }
 
     const item = await (prisma as any).inventoryItem.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!item) {
@@ -34,16 +39,17 @@ export async function GET(
 // PUT / PATCH: Update data suku cadang atau penyesuaian stok cepat
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: RouteParams
 ) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Akses ditolak. Khusus Administrator.' }, { status: 403 });
     }
 
     const currentItem = await (prisma as any).inventoryItem.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!currentItem) {
@@ -78,7 +84,7 @@ export async function PATCH(
       }
 
       const updated = await (prisma as any).inventoryItem.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           stock: newStock,
           notes: notes ? `${currentItem.notes || ''}\n[Stok ${type}]: ${notes}`.trim() : currentItem.notes,
@@ -105,7 +111,7 @@ export async function PATCH(
       const existingSku = await (prisma as any).inventoryItem.findUnique({
         where: { sku: data.sku.toUpperCase() },
       });
-      if (existingSku && existingSku.id !== params.id) {
+      if (existingSku && existingSku.id !== id) {
         return NextResponse.json(
           { error: `Kode SKU "${data.sku}" telah digunakan oleh item lain.` },
           { status: 400 }
@@ -114,7 +120,7 @@ export async function PATCH(
     }
 
     const updatedItem = await (prisma as any).inventoryItem.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(data.sku && { sku: data.sku.toUpperCase() }),
         ...(data.name !== undefined && { name: data.name }),
@@ -150,16 +156,17 @@ export async function PATCH(
 // DELETE: Hapus suku cadang dari inventaris
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: RouteParams
 ) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Akses ditolak. Khusus Administrator.' }, { status: 403 });
     }
 
     const item = await (prisma as any).inventoryItem.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!item) {
@@ -167,7 +174,7 @@ export async function DELETE(
     }
 
     await (prisma as any).inventoryItem.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: `Suku cadang "${item.name}" (${item.sku}) berhasil dihapus.` });

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { requireAdmin } from '@/lib/rbac';
@@ -7,16 +8,21 @@ import { ServiceForm } from '@/components/admin/ServiceForm';
 export const dynamic = 'force-dynamic';
 
 interface EditServicePageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default async function EditAdminServicePage({ params }: EditServicePageProps) {
+export default async function EditAdminServicePage({
+  params,
+}: EditServicePageProps) {
   await requireAdmin();
 
+  // Next.js 15: params harus di-await
+  const { id } = await params;
+
   const service = await prisma.service.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!service) {

@@ -5,9 +5,9 @@ import { getSession } from '@/lib/auth';
 export const dynamic = 'force-dynamic';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -17,13 +17,14 @@ interface RouteParams {
  */
 export async function PATCH(_request: Request, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: 'Harap login terlebih dahulu.' }, { status: 401 });
     }
 
     const result = await prisma.notification.updateMany({
-      where: { id: params.id, userId: session.id },
+      where: { id, userId: session.id },
       data: { isRead: true },
     });
     if (result.count === 0) {

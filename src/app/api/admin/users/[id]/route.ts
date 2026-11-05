@@ -36,11 +36,12 @@ const USER_SELECT = {
 } as const;
 
 interface RouteParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: 'Harap login terlebih dahulu.' }, { status: 401 });
@@ -63,7 +64,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const data = parsed.data;
 
     const target = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { id: true, role: true, isActive: true, email: true },
     });
     if (!target) {

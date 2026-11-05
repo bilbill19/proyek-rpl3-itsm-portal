@@ -84,7 +84,7 @@ export async function verifyPasswordResetToken(token: string, passwordHash: stri
 
 // Get Current Logged In Session from Cookies in Server Components / API Routes
 export async function getSession(): Promise<UserSession | null> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return null;
   const payload = await verifySessionToken(token);
@@ -106,7 +106,7 @@ export async function getSession(): Promise<UserSession | null> {
 
 // Set Session Cookie
 export async function setSessionCookie(token: string) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -118,7 +118,7 @@ export async function setSessionCookie(token: string) {
 
 // Clear Session Cookie (Logout)
 export async function clearSessionCookie() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.delete(COOKIE_NAME);
 }
 

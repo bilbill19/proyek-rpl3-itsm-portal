@@ -6,14 +6,15 @@ import { serviceSchema } from '@/lib/validations/service';
 export const dynamic = 'force-dynamic';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET: Ambil detail satu layanan
 export async function GET(request: Request, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const showInactive = searchParams.get('all') === 'true';
 
@@ -22,7 +23,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     // Publik hanya boleh melihat layanan AKTIF.
     // Admin dengan ?all=true boleh melihat layanan nonaktif.
-    const where = { id: params.id };
+    const where = { id };
     if (!isAdmin || !showInactive) {
       Object.assign(where, { isActive: true });
     }
@@ -42,6 +43,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 // PUT / PATCH: Update layanan (Khusus Admin)
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Akses ditolak. Khusus Administrator.' }, { status: 403 });
@@ -52,7 +54,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     // Jika hanya toggle status aktif / nonaktif
     if (Object.keys(body).length === 1 && body.isActive !== undefined) {
       const updated = await prisma.service.update({
-        where: { id: params.id },
+        where: { id },
         data: { isActive: Boolean(body.isActive) },
       });
       return NextResponse.json({
@@ -71,7 +73,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const { name, description, price, estimatedDuration, image, isActive } = parsed.data;
 
     const updatedService = await prisma.service.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         description,
@@ -95,6 +97,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 // DELETE: Hapus layanan (Khusus Admin)
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session || session.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Akses ditolak. Khusus Administrator.' }, { status: 403 });
@@ -102,13 +105,13 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     // Cek apakah layanan ini terhubung dengan pesanan yang sudah ada
     const relatedOrdersCount = await prisma.serviceOrder.count({
-      where: { serviceId: params.id },
+      where: { serviceId: id },
     });
 
     if (relatedOrdersCount > 0) {
       // Jika ada pesanan terkait, nonaktifkan (soft delete) agar integritas foreign key terjaga
       await prisma.service.update({
-        where: { id: params.id },
+        where: { id },
         data: { isActive: false },
       });
 
@@ -119,7 +122,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     // Jika tidak ada pesanan terkait, hapus permanen
     await prisma.service.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({

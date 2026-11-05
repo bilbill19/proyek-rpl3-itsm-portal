@@ -10,14 +10,15 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // POST: Kirim pesan user ke percakapan dan generate balasan AI
 export async function POST(request: Request, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: 'Harap login terlebih dahulu.' }, { status: 401 });
@@ -34,7 +35,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     const conversation = await prisma.aIConversation.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         messages: {
           orderBy: { createdAt: 'asc' },
@@ -65,7 +66,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     //    tidak pernah disimpan sebagai pesan USER).
     const userMessage = await prisma.aIMessage.create({
       data: {
-        conversationId: params.id,
+        conversationId: id,
         role: 'USER',
         content: userText,
       },
@@ -91,7 +92,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     // 4. Simpan balasan AI ke Database
     const aiMessage = await prisma.aIMessage.create({
       data: {
-        conversationId: params.id,
+        conversationId: id,
         role: 'ASSISTANT',
         content: reply,
       },
@@ -109,7 +110,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     await prisma.aIConversation.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title: updatedTitle,
         updatedAt: new Date(),

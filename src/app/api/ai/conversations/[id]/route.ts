@@ -7,21 +7,22 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET: Ambil percakapan tertentu beserta seluruh pesannya
 export async function GET(request: Request, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: 'Harap login terlebih dahulu.' }, { status: 401 });
     }
 
     const conversation = await prisma.aIConversation.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         messages: {
           orderBy: { createdAt: 'asc' },
@@ -50,13 +51,14 @@ export async function GET(request: Request, { params }: RouteParams) {
 // DELETE: Hapus percakapan AI
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: 'Harap login terlebih dahulu.' }, { status: 401 });
     }
 
     const conversation = await prisma.aIConversation.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!conversation) {
@@ -70,7 +72,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     }
 
     await prisma.aIConversation.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: 'Percakapan berhasil dihapus!' });

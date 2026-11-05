@@ -29,17 +29,18 @@ import { formatCurrency, formatDate, getOrderStatusLabel } from '@/lib/utils';
 export const dynamic = 'force-dynamic';
 
 interface OrderDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function CustomerOrderDetailPage({ params }: OrderDetailPageProps) {
   const session = await requireCustomer();
+  const { id } = await params;
 
   // 1. Ambil data pesanan dari database
   const order = await prisma.serviceOrder.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       customer: {
         select: { id: true, name: true, email: true, phone: true },
