@@ -6,8 +6,8 @@
 
 - Nama: Bilbina Maharani
 - NIM: 41257095
-- Kelas: perlu dikonfirmasi
-- Kelompok dan Tema Topik Kelompok: perlu diisi pemilik (tidak tersedia dalam lampiran)
+- Kelas: TI-KIP-1A-2025
+- Kelompok dan Tema Topik Kelompok: RPL 3 & Bisnis
 - Target repo: `username/proyek-rpl-itsm-portal` (repo publik belum dibuat)
 
 ## Aplikasi dan AI
