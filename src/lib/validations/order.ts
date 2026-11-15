@@ -28,3 +28,31 @@ export const createServiceOrderSchema = z
   );
 
 export type CreateServiceOrderInput = z.infer<typeof createServiceOrderSchema>;
+
+// Validasi update pesanan oleh Admin
+export const updateServiceOrderSchema = z.object({
+  status: z.enum([
+    'CREATED',
+    'WAITING_CONFIRMATION',
+    'DEVICE_RECEIVED',
+    'CHECKING',
+    'IN_PROGRESS',
+    'WAITING_APPROVAL',
+    'COMPLETED',
+    'DELIVERED',
+  ]).optional(),
+
+  note: z.string().max(1000, 'Catatan maksimal 1000 karakter').optional(),
+
+  estimatedPrice: z.union([
+    z.number().finite().nonnegative(),
+    z.string().regex(/^\d+(\.\d{1,2})?$/, 'Estimasi harga harus berupa angka valid'),
+  ]).nullable().optional(),
+
+  finalPrice: z.union([
+    z.number().finite().nonnegative(),
+    z.string().regex(/^\d+(\.\d{1,2})?$/, 'Harga final harus berupa angka valid'),
+  ]).nullable().optional(),
+}).strict();
+
+export type UpdateServiceOrderInput = z.infer<typeof updateServiceOrderSchema>;

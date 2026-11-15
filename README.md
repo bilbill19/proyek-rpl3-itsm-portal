@@ -35,11 +35,11 @@ Berikut adalah tautan dokumentasi video pengembangan dan demonstrasi aplikasi IT
 ## 💡 Deskripsi Aplikasi & Fitur AI
 
 ### Tentang ITSM Portal
-**ITSM Portal** adalah solusi perangkat lunak berbasis web yang dirancang khusus untuk mendigitalkan dan mengoptimalkan seluruh alur kerja bisnis jasa perbaikan dan pemeliharaan teknologi informasi (*IT Service & Maintenance*). Sistem menghubungkan pelanggan (*Customer*) yang membutuhkan jasa perbaikan dengan teknisi/administrator (*Admin*) yang menangani workshop dan inventaris.
+**ITSM Portal** adalah solusi perangkat lunak berbasis web yang dirancang khusus untuk mendigitalkan dan mengoptimalkan seluruh alur kerja bisnis jasa perbaikan dan pemeliharaan teknologi informasi (*IT Service & Maintenance*). Sistem menghubungkan pelanggan (*Customer*) yang membutuhkan jasa perbaikan dengan administrator (*Admin*) yang menangani workshop dan inventaris.
 
 Aplikasi ini mencakup modul fungsional:
 1. **Katalog Layanan IT Dinamis**: Pengelolaan katalog servis, estimasi durasi, dan tarif biaya perbaikan.
-2. **Siklus Hidup Tiket Servis (Order Management)**: Alur status perbaikan dari pemesanan awal, penerimaan perangkat, diagnosa kerusakan, proses servis teknisi, verifikasi garansi, hingga penyerahan kembali ke pelanggan.
+2. **Siklus Hidup Tiket Servis (Order Management)**: Alur status perbaikan dari pemesanan awal, penerimaan perangkat, diagnosa kerusakan, proses servis oleh Admin, verifikasi garansi, hingga penyerahan kembali ke pelanggan.
 3. **Pelacakan Publik Real-Time**: Fitur pelacakan status tiket langsung menggunakan kode tiket unik (misal: `SRV-2026-0001`) tanpa mewajibkan login.
 4. **Manajemen User & Hak Akses (RBAC)**: Pengelolaan akun Admin dan Customer, penonaktifan akun, serta proteksi fail-closed.
 5. **Manajemen Suku Cadang / Inventaris**: Pencatatan komponen hardware, penyesuaian stok, dan pemantauan batas minimum stok.
@@ -54,11 +54,12 @@ Asisten AI cerdas terintegrasi yang berfungsi sebagai konsultan teknis lini pert
 - **Pemesanan 1-Klik (*Pre-filled Order*)**: Menghubungkan rekomendasi AI langsung ke formulir pemesanan baru (`/dashboard/orders/new`) dengan deskripsi kerusakan dan jenis servis yang terisi otomatis.
 - **AI Asisten Operasional Admin**: Admin dapat meminta rangkuman performa operasional, antrian tiket servis aktif, dan status suku cadang.
 - **Arsitektur Modular Multi-Provider**: Mendukung berbagai provider model AI yang dapat dikonfigurasi melalui environment variable (`AI_PROVIDER`):
-  - **Google Gemini** (Gemini 1.5 Flash / Pro)
-  - **OpenAI** (GPT-4o / GPT-3.5 Turbo)
-  - **Anthropic Claude** (Claude 3.5 Sonnet)
-  - **Ollama** (Model lokal seperti Llama 3 / Mistral)
-  - **Expert Engine (Offline Fallback)**: Mesin pakar berbasis aturan lokal tanpa ketergantungan API eksternal yang menjamin ketersediaan sistem 100% (*Zero Downtime*).
+  - **NVIDIA NIM**: Provider AI berbasis cloud yang dapat dipilih melalui konfigurasi `AI_PROVIDER`.
+  - **Google Gemini**: Provider AI Google.
+  - **OpenAI**: Provider AI OpenAI.
+  - **Anthropic Claude**: Provider AI Anthropic.
+  - **Ollama**: Provider model AI lokal.
+  - **Expert Engine (Default)**: Mesin pakar berbasis aturan lokal tanpa ketergantungan API eksternal. Digunakan sebagai provider default dan fallback ketika provider eksternal tidak tersedia.
 
 ---
 
@@ -85,7 +86,7 @@ Daftar pustaka dan perangkat lunak yang digunakan dalam pengembangan sistem meng
 ## 🎯 Fitur Utama Sistem
 
 ### 1. 🛡️ Keamanan & Hak Akses Berbasis Peran (RBAC)
-- **Role ADMIN:** Mengelola antrian tiket servis masuk, memperbarui status pengerjaan, menginput harga final, mencatat catatan teknisi, mengelola katalog layanan, stok suku cadang, dan akun pengguna.
+- **Role ADMIN:** Mengelola antrian tiket servis masuk, memperbarui status pengerjaan, menginput harga final, mencatat catatan pengerjaan, mengelola katalog layanan, stok suku cadang, dan akun pengguna.
 - **Role CUSTOMER:** Mengajukan pesanan servis perbaikan (Drop-Off ke toko atau Onsite ke lokasi), berkonsultasi dengan asisten AI, memantau riwayat garansi, dan melacak progres servis.
 - **Isolasi Data Ketat:** Setiap query database memverifikasi kepemilikan sesi pengguna (`session.id`), mencegah akses tidak sah antar-pelanggan.
 - **Next.js Route Protection:** Edge Middleware dan helper guards server-side (`requireAdmin`, `requireCustomer`) membatasi akses URL secara ketat.
@@ -93,8 +94,8 @@ Daftar pustaka dan perangkat lunak yang digunakan dalam pengembangan sistem meng
 
 ### 2. 📦 Siklus Pelacakan Servis Real-Time (`/track` & `/dashboard/orders/[id]`)
 - Linimasa tahapan status pengerjaan:
-  `CREATED` → `DEVICE_RECEIVED` → `CHECKING` → `IN_PROGRESS` → `COMPLETED` → `DELIVERED` (atau `CANCELLED`).
-- Riwayat status (*status history*) dilengkapi catatan perkembangan teknisi dan stempel waktu.
+  `CREATED` → `WAITING_CONFIRMATION` → `DEVICE_RECEIVED` → `CHECKING` → `IN_PROGRESS` → `WAITING_APPROVAL` → `COMPLETED` → `DELIVERED`.
+- Riwayat status (*status history*) dilengkapi catatan perkembangan pengerjaan dan stempel waktu.
 - Notifikasi pembaruan status terintegrasi secara otomatis ke antrian pesan.
 
 ### 3. 👥 Manajemen User Terpusat (`/admin/users`)
@@ -162,7 +163,7 @@ it-service-management/
 │   │   ├── layout/               # Navbar, Footer, AdminSidebar, CustomerSidebar
 │   │   └── ui/                   # Reusable UI Primitives (Button, Input, Card, Modal, Badge)
 │   ├── lib/                      # Business Logic & Utility Backend
-│   │   ├── ai/                   # Modular AI Engine (Gemini, OpenAI, Claude, Ollama, Expert)
+│   │   ├── ai/                   # Modular AI Engine (NVIDIA NIM, Gemini, OpenAI, Anthropic, Ollama, Expert Engine)
 │   │   ├── auth.ts               # JWT Session Cookies (Async Next.js 15) & Password Hashing
 │   │   ├── prisma.ts             # Prisma Client singleton
 │   │   ├── rbac.ts               # Server Security Guards (requireAdmin, requireCustomer)
@@ -267,16 +268,17 @@ Sesuaikan variabel konfigurasi di dalam file `.env`:
 DATABASE_URL="postgresql://postgres:password_anda@localhost:5432/itsm_db?schema=public"
 
 # Kunci Rahasia JWT (Wajib diisi string acak aman untuk penandatanganan sesi)
-JWT_SECRET="itsm_super_secure_jwt_secret_key_2026_production_grade"
+JWT_SECRET="GANTI_DENGAN_SECRET_RANDOM_YANG_AMAN"
 
 # Base URL Aplikasi
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 # Konfigurasi Provider AI Engine
-# Pilihan: expert (Default Offline), gemini, openai, anthropic, ollama
+# Pilihan: expert (default), nvidia, gemini, openai, anthropic, ollama
 AI_PROVIDER="expert"
 
 # (Opsional) Jika menggunakan Provider Cloud AI:
+# NVIDIA_API_KEY="nvapi-..."
 # GEMINI_API_KEY="AIzaSy..."
 # OPENAI_API_KEY="sk-..."
 ```

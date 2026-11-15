@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { updateServiceOrderSchema } from '@/lib/validations/order';
 import { OrderStatus } from '@prisma/client';
+import { getOrderStatusTransitionError } from '@/lib/order-status';
 import { upsertOrderStatusNotification } from '@/lib/notifications/service';
 import { kickWhatsappOutbox, processOutbox } from '@/lib/whatsapp/dispatcher';
 import { getWhatsappConfig } from '@/lib/whatsapp/env';
@@ -64,8 +66,30 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       );
     }
 
-    const body = await request.json();
-    const { status, note, estimatedPrice, finalPrice } = body;
+    let body: unknown;
+
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Format JSON tidak valid.' },
+        { status: 400 }
+      );
+    }
+
+    const validation = updateServiceOrderSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Data pesanan tidak valid.',
+          details: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { status, note, estimatedPrice, finalPrice } = validation.data;
 
     // Ambil data order lama
     const existingOrder = await prisma.serviceOrder.findUnique({
@@ -76,35 +100,77 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Pesanan tidak ditemukan.' }, { status: 404 });
     }
 
-    const targetStatus = (status as OrderStatus) || existingOrder.status;
+    const targetStatus: OrderStatus = status ?? existingOrder.status;
+
+    const statusChanged = targetStatus !== existingOrder.status;
+
+    const transitionError = getOrderStatusTransitionError(
+      existingOrder.status,
+      targetStatus,
+      note
+    );
+
+    if (transitionError) {
+      return NextResponse.json(
+        { error: transitionError },
+        { status: 400 }
+      );
+    }
 
     // Persiapkan data update untuk ServiceOrder
     const updateData: any = {};
     if (status) {
       updateData.status = targetStatus;
     }
-    if (estimatedPrice !== undefined && estimatedPrice !== null && estimatedPrice !== '') {
+    if (estimatedPrice !== undefined && estimatedPrice !== null) {
       updateData.estimatedPrice = Number(estimatedPrice);
     }
-    if (finalPrice !== undefined && finalPrice !== null && finalPrice !== '') {
+
+    if (finalPrice !== undefined && finalPrice !== null) {
       updateData.finalPrice = Number(finalPrice);
     }
 
     // Jalankan update dan penambahan history dalam transaksi
     const updatedOrder = await prisma.$transaction(async (tx) => {
       // 1. Update data ServiceOrder
-      const ord = await tx.serviceOrder.update({
-        where: { id },
+      // Update hanya jika status database masih sama dengan status yang dibaca.
+      const updateResult = await tx.serviceOrder.updateMany({
+        where: {
+          id,
+          status: existingOrder.status,
+        },
         data: updateData,
+      });
+
+      // Admin lain mungkin sudah mengubah status lebih dulu.
+      if (updateResult.count !== 1) {
+        return null;
+      }
+
+      const ord = await tx.serviceOrder.findUnique({
+        where: { id },
         include: {
-          customer: true,
+          customer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              role: true,
+              createdAt: true,
+            },
+          },
           service: true,
           statusHistory: { orderBy: { createdAt: 'desc' } },
         },
       });
 
+      if (!ord) {
+        return null;
+      }
+
       // 2. Simpan entri baru ke ServiceOrderStatusHistory jika status berubah atau ada catatan yang disertakan
-      if (status !== existingOrder.status || (note && note.trim().length > 0)) {
+      if (statusChanged || (note && note.trim().length > 0)) {
         await tx.serviceOrderStatusHistory.create({
           data: {
             orderId: id,
@@ -143,6 +209,13 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       return ord;
     });
 
+    if (!updatedOrder) {
+      return NextResponse.json(
+        { error: 'Pesanan sudah diubah oleh administrator lain. Muat ulang data sebelum mencoba lagi.' },
+        { status: 409 }
+      );
+    }
+
     // 4. DI LUAR transaksi — dispatcher WhatsApp (tidak pernah HTTP dalam transaksi).
     //    Simulation/disabled: deterministik (riwayat preview siap sebelum respons).
     //    Mode LIVE: async non-blocking agar respons admin tidak menunggu Graph API.
@@ -159,7 +232,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const freshOrder = await prisma.serviceOrder.findUnique({
       where: { id },
       include: {
-        customer: true,
+        customer: {
+  select: {
+    id: true,
+    name: true,
+    email: true,
+    phone: true,
+    role: true,
+    createdAt: true,
+  },
+},
         service: true,
         statusHistory: { orderBy: { createdAt: 'desc' } },
       },

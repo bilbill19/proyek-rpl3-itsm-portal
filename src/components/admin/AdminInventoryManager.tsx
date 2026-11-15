@@ -313,95 +313,83 @@ export function AdminInventoryManager({ initialItems }: AdminInventoryManagerPro
         </div>
       )}
 
-      {/* KPI Stat Cards */}
+      {/* KPI Stat Cards — konten vertikal & rata tengah: ikon → judul → angka → keterangan.
+          Compact: padding hanya Card p-5 (tanpa padding ganda), jarak antar-unsur gap-1.5 (tinggi ~170–190px).
+          lg:grid-cols-4 → desktop ≥1024px selalu 4 kartu 1 baris (termasuk ≥1280px);
+          sm:grid-cols-2 → tablet 2 kolom; grid-cols-1 → mobile 1 kolom.
+          Pada 1024–1279px kartu sempit, angka memakai text-lg agar "Rp 28.815.000" tetap utuh 1 baris. */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total SKUs */}
-        <Card className="bg-white border-slate-200 backdrop-blur-sm relative overflow-hidden">
+        <Card className="bg-white border-slate-200 backdrop-blur-sm relative overflow-hidden flex flex-col p-5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-full pointer-events-none" />
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Total Varian Sparepart</p>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1 tracking-tight">{metrics.totalVariants}</h3>
-                <p className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-1 flex items-center gap-1 font-medium">
-                  <Boxes className="w-3.5 h-3.5" /> SKU Terdaftar
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                <HardDrive className="w-6 h-6" />
-              </div>
+          <CardContent className="flex-1 flex flex-col items-center justify-center text-center gap-1.5 p-0">
+            <div className="w-12 h-12 rounded-xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+              <HardDrive className="w-6 h-6" />
             </div>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Total Varian Sparepart</p>
+            <h3 className="text-2xl lg:text-lg xl:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{metrics.totalVariants}</h3>
+            <p className="text-[11px] text-indigo-600 dark:text-indigo-400 flex items-center gap-1 font-medium">
+              <Boxes className="w-3.5 h-3.5" /> SKU Terdaftar
+            </p>
           </CardContent>
         </Card>
 
         {/* Card 2: Total Physical Stock */}
-        <Card className="bg-white border-slate-200 backdrop-blur-sm relative overflow-hidden">
+        <Card className="bg-white border-slate-200 backdrop-blur-sm relative overflow-hidden flex flex-col p-5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-teal-500/5 rounded-bl-full pointer-events-none" />
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Total Fisik Unit Stok</p>
-                <h3 className="text-2xl font-bold text-teal-700 dark:text-teal-300 mt-1 tracking-tight">{metrics.totalStock}</h3>
-                <p className="text-[11px] text-teal-700 dark:text-teal-400 mt-1 flex items-center gap-1 font-medium">
-                  <Package className="w-3.5 h-3.5" /> Unit Siap Pakai
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-teal-600/10 border border-teal-500/20 flex items-center justify-center text-teal-700 dark:text-teal-400">
-                <Package className="w-6 h-6" />
-              </div>
+          <CardContent className="flex-1 flex flex-col items-center justify-center text-center gap-1.5 p-0">
+            <div className="w-12 h-12 rounded-xl bg-teal-600/10 border border-teal-500/20 flex items-center justify-center text-teal-700 dark:text-teal-400 shrink-0">
+              <Package className="w-6 h-6" />
             </div>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Total Fisik Unit Stok</p>
+            <h3 className="text-2xl lg:text-lg xl:text-2xl font-bold text-teal-700 dark:text-teal-300 tracking-tight">{metrics.totalStock}</h3>
+            <p className="text-[11px] text-teal-700 dark:text-teal-400 flex items-center gap-1 font-medium">
+              <Package className="w-3.5 h-3.5" /> Unit Siap Pakai
+            </p>
           </CardContent>
         </Card>
 
         {/* Card 3: Total Asset Valuation */}
-        <Card className="bg-white border-slate-200 backdrop-blur-sm relative overflow-hidden">
+        <Card className="bg-white border-slate-200 backdrop-blur-sm relative overflow-hidden flex flex-col p-5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-bl-full pointer-events-none" />
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Valuasi Total Aset</p>
-                <h3 className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 mt-1 tracking-tight">
-                  {formatCurrency(metrics.totalValuation)}
-                </h3>
-                <p className="text-[11px] text-emerald-400/80 mt-1 flex items-center gap-1 font-medium">
-                  <TrendingUp className="w-3.5 h-3.5" /> Modal Tertanam
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
-                <TrendingUp className="w-6 h-6" />
-              </div>
+          <CardContent className="flex-1 flex flex-col items-center justify-center text-center gap-1.5 p-0">
+            <div className="w-12 h-12 rounded-xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0">
+              <TrendingUp className="w-6 h-6" />
             </div>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Valuasi Total Aset</p>
+            <h3 className="text-2xl lg:text-lg xl:text-2xl font-bold text-emerald-700 dark:text-emerald-400 tracking-tight">
+              {formatCurrency(metrics.totalValuation)}
+            </h3>
+            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
+              <TrendingUp className="w-3.5 h-3.5" /> Modal Tertanam
+            </p>
           </CardContent>
         </Card>
 
         {/* Card 4: Low Stock Warnings */}
-        <Card className="bg-white border-slate-200 backdrop-blur-sm relative overflow-hidden">
+        <Card className="bg-white border-slate-200 backdrop-blur-sm relative overflow-hidden flex flex-col p-5">
           <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-bl-full pointer-events-none" />
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Peringatan Stok Menipis</p>
-                <h3
-                  className={`text-2xl font-bold mt-1 tracking-tight ${
-                    metrics.lowStockCount > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-700 dark:text-slate-200'
-                  }`}
-                >
-                  {metrics.lowStockCount} Item
-                </h3>
-                <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1 flex items-center gap-1 font-medium">
-                  <AlertTriangle className="w-3.5 h-3.5" /> {metrics.outOfStockCount} Habis Total
-                </p>
-              </div>
-              <div
-                className={`w-12 h-12 rounded-xl flex items-center justify-center border ${
-                  metrics.lowStockCount > 0
-                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400'
-                    : 'bg-slate-200 dark:bg-slate-800/40 border-slate-300 dark:border-slate-700/50 text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                <AlertTriangle className="w-6 h-6" />
-              </div>
+          <CardContent className="flex-1 flex flex-col items-center justify-center text-center gap-1.5 p-0">
+            <div
+              className={`w-12 h-12 rounded-xl flex items-center justify-center border shrink-0 ${
+                metrics.lowStockCount > 0
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400'
+                  : 'bg-slate-200 dark:bg-slate-800/40 border-slate-300 dark:border-slate-700/50 text-slate-600 dark:text-slate-400'
+              }`}
+            >
+              <AlertTriangle className="w-6 h-6" />
             </div>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Peringatan Stok Menipis</p>
+            <h3
+              className={`text-2xl lg:text-lg xl:text-2xl font-bold tracking-tight ${
+                metrics.lowStockCount > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-slate-700 dark:text-slate-200'
+              }`}
+            >
+              {metrics.lowStockCount} Item
+            </h3>
+            <p className="text-[11px] text-amber-700 dark:text-amber-400 flex items-center gap-1 font-medium">
+              <AlertTriangle className="w-3.5 h-3.5" /> {metrics.outOfStockCount} Habis Total
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -409,9 +397,9 @@ export function AdminInventoryManager({ initialItems }: AdminInventoryManagerPro
       {/* Control Bar: Search, Category Filters, & Actions */}
       <Card className="bg-white border-slate-200 shadow-xl backdrop-blur-md">
         <CardContent className="p-4 sm:p-5 space-y-4">
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
+          <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
+            {/* Search Input — min-w agar tidak pernah menyusut jadi ikon saat tombol filter ikut memenuhi baris */}
+            <div className="relative w-full xl:w-auto xl:flex-1 xl:min-w-[260px]">
               <Search className="w-4 h-4 text-slate-600 dark:text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -431,8 +419,8 @@ export function AdminInventoryManager({ initialItems }: AdminInventoryManagerPro
               )}
             </div>
 
-            {/* Filter & Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2.5">
+            {/* Filter & Action Buttons — w-full di bawah xl (baris sendiri, boleh wrap); w-auto di xl agar tidak menekan input pencarian */}
+            <div className="flex flex-wrap items-center gap-2.5 w-full xl:w-auto">
               {/* Status Filter */}
               <select
                 aria-label="Filter status stok"
@@ -472,8 +460,8 @@ export function AdminInventoryManager({ initialItems }: AdminInventoryManagerPro
             </div>
           </div>
 
-          {/* Quick Category Chips */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
+          {/* Quick Category Chips — flex-wrap: kategori turun baris, tanpa scroll horizontal */}
+          <div className="flex flex-wrap items-center gap-1.5 pb-1 text-xs">
             <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1 shrink-0 mr-1">
               <Filter className="w-3 h-3" /> Kategori:
             </span>

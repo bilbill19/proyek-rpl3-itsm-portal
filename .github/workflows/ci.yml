@@ -12,7 +12,8 @@ jobs:
     env:
       # Placeholder DB connection – replace with actual secret in CI
       DATABASE_URL: "postgresql://username:password@localhost:5432/itsm_db"
-      # Any other env vars required by the app (e.g., JWT secret) can be set here as placeholders
+      JWT_SECRET: "ci-only-dummy-secret-not-for-production-2026"
+      # AI_PROVIDER defaults to Expert Engine; cloud API keys are optional
       NEXT_PUBLIC_API_URL: "http://localhost:3000/api"
     steps:
       - name: Checkout repository
